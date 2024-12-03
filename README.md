@@ -1,6 +1,8 @@
 # IOT_ADD_System
-GB2312
-物联网农业检测系统、持续更新
+103code and 407code GB2312
+CSprj UTF-8
+物联网农业检测系统，在校学习与实践项目
+
 
 
 
