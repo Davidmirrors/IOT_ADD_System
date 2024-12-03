@@ -3,7 +3,7 @@
 CSproject UTF-8
 103rxcode and 407maincode and README GB2312
 
-物联网农业检测系统，在校学习与实践项目
+物联网农业检测系统，在校学习与大创实践项目
 
 
 
