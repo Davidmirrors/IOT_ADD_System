@@ -18,13 +18,13 @@ SRC_DIR = src
 
 #存放头文件的文件夹
 INC_DIR = inc .
-# INC_DIR += /home/gec/jpg/include/        #增加头文件的文件夹
+# INC_DIR += /home/jpg/include/        #增加头文件的文件夹
 
 # 库
 LIB_NAMES =-lpthread
 # LIB_NAMES +=-l其它库的名字           #增加库
 #库路径
-# LIB_PATH =-L /home/gec/jpg/lib/
+# LIB_PATH =-L /home/jpg/lib/
 # LIB_PATH +=-L其它库的路径           #增加库的路径
 
 #源文件
