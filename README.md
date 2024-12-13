@@ -5,7 +5,7 @@ CSproject/README UTF-8
 103rxcode/407maincode GB2312
 
 物联网农业检测系统，原裸机项目是在校学习与大创实践项目
-13/12/2024  更新移植RTOS版本、显示改用800*480LCD屏幕、新增Flash驱动与SDRAM显存;
+13/12/2024  更新移植RTOS版本、显示改用800*480LCD屏幕、新增Flash驱动与SDRAM显存,具体实现详情见 Using_RTOS/IOT_ADD_System/Readme.txt;
             USART3相关重定向与u3_printf函数暂未移植、ESP8266的AT指令控制未优化未启用,预计2天内更新。
             103RCV_test与CSproject_test测试用例可正常上下行。
             后续将新增:
