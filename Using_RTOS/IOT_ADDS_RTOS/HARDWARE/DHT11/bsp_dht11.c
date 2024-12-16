@@ -26,7 +26,7 @@
 
 /* 可以在下面的宏定义中把后面的延时函数替换换SysTick的延时函数，就是想用那个就换成那个的 */
 
-#define DHT11_DELAY_US(us)  CPU_TS_Tmr_Delay_US(us)
+#define DHT11_DELAY_US(us)  Delay_US(us)
 #define DHT11_DELAY_MS(ms)  vTaskDelay(ms)
 //#define DHT11_DELAY_MS(ms)  CPU_TS_Tmr_Delay_MS(ms)
 

@@ -1,72 +1,109 @@
 /***********
 //@Davidmirrors
 //7/12/2023
-//13/5/2024
+//17/12/2024
 //ESP8266初始化
 //GB2312
-//.....
+//注意:因为没有相关ESP8266-01s的数据/参考手册不了解回参特性，所以没用相关的固件指令和回参判断AT指令是否成功
+//只用了比较简单的AT指令控制和利用Delay函数跳过响应AT指令的busy p...时间片，
+//所以在使用的时候建议先用电脑串口助手和TTL设备测试ESP82666-01s的功能是否能正常响应AT指令
 ************/
 
 #include "esp8266.h"
 #include "bsp_debug_usart.h"
 #include "core_delay.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 int WIFI_Mode_FLAG = 1;
 
-//void Wifi_Init(void)
-//{
-//	if(WIFI_Mode_FLAG == 0)
+void Wifi_Init(void)
+{
+	if(WIFI_Mode_FLAG == 0)
+	{
+		u3_printf("AT+CWMODE=3\r\n");//设置为 AP模式
+	
+		Delay_MS(500);
+		
+		u3_printf("AT+RST\r\n");//重启
+		Delay_MS(1500);
+		
+		u3_printf("AT+CIPAP=\"192.168.1.1\"\r\n");//设置IP:192.168.1.1
+		Delay_MS(500);
+
+		u3_printf("AT+CWSAP=\"FHQ\",\"12345678\",5,0\r\n");//设置wifi名称是CZJ，密码12345678，最多5个人同时连接，连接时无需密码；
+		Delay_MS(500);
+		
+		u3_printf("AT+CIPMUX=1\r\n");//启动多连接
+		Delay_MS(500);
+		
+		u3_printf("AT+CIPSERVER=1,8080\r\n");//设置端口8080
+		Delay_MS(500);
+
+//		u3_printf("AT+CIPSEND=0,5\r\n");
+		
+//		AT+CIPSEND=0,5
+//		hello,tcp
+	}
+	else
+	{
+		u3_printf("AT+CWMODE=1\r\n");//设置为 softAP+station 共存模式
+	
+		Delay_MS(500);
+		
+		u3_printf("AT+RST\r\n");//重启
+		Delay_MS(2000);
+		
+		u3_printf("AT+CWJAP=\"Mirror_zero\",\"11111111\"\r\n");//连接wifi
+		Delay_MS(3000);
+		
+		u3_printf("AT+CIPMUX=0\r\n");//启动单连接
+		Delay_MS(500);
+
+		u3_printf("AT+CIPSTART=\"TCP\",\"120.xxx.xxx.xxx\",xxxx\r\n");//连接服务器，协议TCP，IP地址xxx，端口xxx
+		Delay_MS(3000);
+		
+		u3_printf("AT+CIPMODE=1\r\n");//设置透传模式
+		Delay_MS(500);
+		
+		u3_printf("AT+CIPSEND\r\n");//开启透传
+		Delay_MS(500);
+	}
+
+	
+/*
+*注意该部分会因vTaskDelay函数将任务释放，在第一个vTaskDelay(500)函数生效期间
+*快速执行发送其他指令，导致AT+RST在最后执行或使其他指令在ESP8266复位期间发送
+*导致AT+CIPSTART指令未被正常执行无法连接服务器
+*后续会根据模块回参情况再发送相应指令的优化
+*/
+//	else
 //	{
-//		u2_printf("AT+CWMODE=3\r\n");//设置为 AP模式
+//		u3_printf("AT+CWMODE=1\r\n");//设置为 softAP+station 共存模式
 //	
-//		delay_ms(500);
+//		vTaskDelay(500);
 //		
-//		u2_printf("AT+RST\r\n");//重启
-//		delay_ms(1500);
+//		u3_printf("AT+RST\r\n");//重启
+//		vTaskDelay(4000);
 //		
-//		u2_printf("AT+CIPAP=\"192.168.1.1\"\r\n");//设置IP:192.168.1.1
-//		delay_ms(500);
+//		u3_printf("AT+CWJAP=\"Mirror_zero\",\"11111111\"\r\n");//连接wifi
+//		vTaskDelay(3000);
+//		
+//		u3_printf("AT+CIPMUX=0\r\n");//启动单连接
+//		vTaskDelay(500);
 
-//		u2_printf("AT+CWSAP=\"FHQ\",\"12345678\",5,0\r\n");//设置wifi名称是CZJ，密码12345678，最多5个人同时连接，连接时无需密码；
-//		delay_ms(500);
+//		u3_printf("AT+CIPSTART=\"TCP\",\"120.76.173.30\",50021\r\n");//连接服务器，协议TCP，IP地址120.76.173.30，端口50021
+//		vTaskDelay(3000);
 //		
-//		u2_printf("AT+CIPMUX=1\r\n");//启动多连接
-//		delay_ms(500);
+//		u3_printf("AT+CIPMODE=1\r\n");//设置透传模式
+//		vTaskDelay(500);
 //		
-//		u2_printf("AT+CIPSERVER=1,8080\r\n");//设置端口8080
-//		delay_ms(500);
-
-////		u2_printf("AT+CIPSEND=0,5\r\n");
-//		
-////		AT+CIPSEND=0,5
-////		hello,tcp
-//	}
-//	if(WIFI_Mode_FLAG == 1)
-//	{
-//		u2_printf("AT+CWMODE=1\r\n");//设置为 softAP+station 共存模式
-//	
-//		delay_ms(500);
-//		
-//		u2_printf("AT+RST\r\n");//重启
-//		delay_ms(1500);
-//		
-//		u2_printf("AT+CWJAP=\"Mirror_zero\",\"11111111\"\r\n");//连接wifi
-//		delay_ms(3000);
-//		
-//		u2_printf("AT+CIPMUX=0\r\n");//启动单连接
-//		delay_ms(500);
-
-//		u2_printf("AT+CIPSTART=\"TCP\",\"120.76.173.30\",50021\r\n");//连接服务器，协议TCP，IP地址120.76.173.30，端口50021
-//		delay_ms(3000);
-//		
-//		u2_printf("AT+CIPMODE=1\r\n");//设置透传模式
-//		delay_ms(500);
-//		
-//		u2_printf("AT+CIPSEND\r\n");//开启透传
-//		delay_ms(500);
+//		u3_printf("AT+CIPSEND\r\n");//开启透传
+//		vTaskDelay(500);
 //	}
 
-//}
+}
 
 
 
@@ -123,7 +160,7 @@ int32_t Esp8266_Init(void)
 	// esp8266_wifi利用串口1通信,前期已配置串口1
 	esp8266_init();
 
-	delay_ms(500);	
+	Delay_MS(500);	
 	
 	// 退出透传模式，才能输入AT指令
 	ret=esp8266_exit_transparent_transmission();
@@ -132,9 +169,9 @@ int32_t Esp8266_Init(void)
 		printf("001: esp8266_exit_transparent_transmission fail\r\n");
 		return -1;
 	}	
-	delay_ms(500);	
+	Delay_MS(500);	
 	printf("001: esp8266_exit_transparent_transmission success\r\n");
-	delay_ms(1000);
+	Delay_MS(1000);
 	
 	
 	// 复位模块
@@ -144,9 +181,9 @@ int32_t Esp8266_Init(void)
 		printf("002: esp8266_reset fail\r\n");
 		return -2;
 	}
-	delay_ms(500);	
+	Delay_MS(500);	
 	printf("002: esp8266_reset success\r\n");
-	delay_ms(1000);
+	Delay_MS(1000);
 
 	
 	// 关闭回显
@@ -156,9 +193,9 @@ int32_t Esp8266_Init(void)
 		printf("003: esp8266_enable_echo(0) fail\r\n");
 		return -3;
 	}	
-	delay_ms(500);	
+	Delay_MS(500);	
 	printf("003: esp8266_enable_echo(0)success\r\n");
-	delay_ms(1000);
+	Delay_MS(1000);
 
 	// 连接热点
 	ret = esp8266_connect_ap(WIFI_SSID,WIFI_PASSWORD);
@@ -167,9 +204,9 @@ int32_t Esp8266_Init(void)
 		printf("004: esp8266_connect_ap fail\r\n");
 		return -4;
 	}	
-	delay_ms(500);	
+	Delay_MS(500);	
 	printf("004: esp8266_connect_ap success\r\n");
-	delay_ms(1000);
+	Delay_MS(1000);
 
 	return 0;
 }
@@ -194,7 +231,7 @@ int32_t esp8266_find_str_in_rx_packet(char *str,uint32_t timeout)
 	//等待串口接收完毕或超时退出，strstr()寻找相应字符串，如果未找到则返回 Null;
 	while((strstr(src,dest)==NULL) && timeout) //while(找到了 ！=  NULL && timeout == 0),退出循环；
 	{		
-		delay_ms(1);
+		Delay_MS(1);
 		timeout--;
 	}
 
@@ -247,7 +284,7 @@ int32_t esp8266_exit_transparent_transmission (void)
 	esp8266_send_at ("+++");
 	
 	//退出透传模式，发送下一条AT指令要间隔1秒
-	delay_ms(1000); 
+	Delay_MS(1000); 
 	
 	//记录当前esp8266工作在非透传模式
 	esp8266_transparent_transmission_sta = 0;
@@ -262,13 +299,13 @@ int32_t esp8266_entry_transparent_transmission(void)
 	esp8266_send_at("AT+CIPMODE=1\r\n");  
 	if(esp8266_find_str_in_rx_packet("OK",5000))
 		return -1;
-	delay_ms(1000);delay_ms(1000);
+	Delay_MS(1000);Delay_MS(1000);
 
 	//开启发送状态
 	esp8266_send_at("AT+CIPSEND\r\n");
 	if(esp8266_find_str_in_rx_packet("OK",5000))
 		return -2;
-	delay_ms(1000);delay_ms(1000);
+	Delay_MS(1000);Delay_MS(1000);
 
 	//记录当前esp8266工作在透传模式
 	esp8266_transparent_transmission_sta = 1;
@@ -445,22 +482,22 @@ int32_t esp8266_close_server(uint16_t port)
 void Wifi_Init(void)
 {
 	USART_sendstr(USART,"AT+CWMODE=3\r\n");//设置为 softAP+station 共存模式
-	delay_ms(500);
+	Delay_MS(500);
 	
 	USART_sendstr(USART,"AT+RST\r\n");//重启
-	delay_ms(1500);
+	Delay_MS(1500);
 	
 	USART_sendstr(USART,"AT+CIPAP=\"192.168.1.1\"\r\n");//设置IP:192.168.1.1
-	delay_ms(500);
+	Delay_MS(500);
 
 	USART_sendstr(USART,"AT+CWSAP=\"FHQ\",\"12345678\",5,0\r\n");//设置wifi名称是CZJ，密码12345678，最多5个人同时连接，连接时无需密码；
-	delay_ms(500);
+	Delay_MS(500);
 	
 	USART_sendstr(USART,"AT+CIPMUX=1\r\n");//启动多连接
-	delay_ms(500);
+	Delay_MS(500);
 	
 	USART_sendstr(USART,"AT+CIPSERVER=1,8080\r\n");//设置端口8080
-	delay_ms(500);
+	Delay_MS(500);
 }
 
 //wifi模块发送语句---每次固定发送num个字节
@@ -471,7 +508,7 @@ void wifisend(char *buf,int num)
 	sprintf(sendfront,"AT+CIPSEND=0,%d\r\n",num);					//组合字符串
 	
 	USART_sendstr(USART,sendfront);
-	delay_ms(5);
+	Delay_MS(5);
 	USART_sendstr(USART,buf);
 }
 

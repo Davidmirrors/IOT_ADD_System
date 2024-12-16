@@ -21,7 +21,8 @@
 //.....
 ************/ 
 #include "bsp_debug_usart.h"
-
+#include "FreeRTOS.h"
+#include "task.h"
 
  /**
   * @brief  配置嵌套向量中断控制器NVIC(USART1)
@@ -134,7 +135,7 @@ void Debug_USART_Config(void)
 }
 
 /**
-  * @brief  DEBUG_USART(USART1) GPIO 配置,工作模式配置。115200 8-N-1 ，中断接收模式
+  * @brief  DEBUG_USART(USART3) GPIO 配置,工作模式配置。115200 8-N-1 ，中断接收模式
   * @param  无
   * @retval 无
   */
@@ -146,7 +147,7 @@ void Debug_USART3_Config(void)
   RCC_AHB1PeriphClockCmd(DEBUG_USART3_RX_GPIO_CLK|DEBUG_USART3_TX_GPIO_CLK,ENABLE);
 
   /* 使能 USART 时钟 */
-  RCC_APB2PeriphClockCmd(DEBUG_USART3_CLK, ENABLE);
+  RCC_APB1PeriphClockCmd(DEBUG_USART3_CLK, ENABLE);
   
   /* GPIO初始化 */
   GPIO_InitStructure.GPIO_OType = GPIO_OType_PP;
@@ -163,10 +164,10 @@ void Debug_USART3_Config(void)
   GPIO_InitStructure.GPIO_Pin = DEBUG_USART3_RX_PIN;
   GPIO_Init(DEBUG_USART3_RX_GPIO_PORT, &GPIO_InitStructure);
   
- /* 连接 PXx 到 USARTx_Tx*/
+	/* 连接 PXx 到 USARTx_Rx*/
   GPIO_PinAFConfig(DEBUG_USART3_RX_GPIO_PORT,DEBUG_USART3_RX_SOURCE,DEBUG_USART3_RX_AF);
 
-  /*  连接 PXx 到 USARTx__Rx*/
+  /* 连接 PXx 到 USARTx_Tx*/
   GPIO_PinAFConfig(DEBUG_USART3_TX_GPIO_PORT,DEBUG_USART3_TX_SOURCE,DEBUG_USART3_TX_AF);
   
   /* 配置串DEBUG_USART 模式 */
@@ -259,4 +260,57 @@ int fgetc(FILE *f)
 
 		return (int)USART_ReceiveData(DEBUG_USART);
 }
+
+static u8 USART3_TX_BUF[USART3_REC_LEN];     //接收缓冲,最大USART3_REC_LEN个字节.
+//USART3_printf函数
+void u3_printf(char* fmt,...)  
+{  
+	u16 i,j; 
+	va_list ap; 
+	va_start(ap,fmt);
+	vsprintf((char*)USART3_TX_BUF,fmt,ap);
+	va_end(ap);
+	i=strlen((const char*)USART3_TX_BUF);		//此次发送数据的长度
+	for(j=0;j<i;j++)							//循环发送数据
+	{
+		while(USART_GetFlagStatus(DEBUG_USART3,USART_FLAG_TC)==RESET); //循环发送,直到发送完毕   
+		USART_SendData(DEBUG_USART3,USART3_TX_BUF[j]); 
+	}
+}
+
+u8 USART3_RX_BUF[USART3_REC_LEN];     //接收缓冲,最大USART3_REC_LEN个字节.
+static u16 USART3_RX_STA=0;      			 //接收状态标记
+//串口3中断服务程序  
+//USART3暂时没有用到回参的内容先搭个框架 
+//USART1的中断回显函数在stm32f4xx_it.c文件，大致在160行
+void USART3_IRQHandler(void)
+{
+	u8 Res;
+	
+	if(USART_GetITStatus(USART3, USART_IT_RXNE) != RESET)  //接收中断(接收到的数据必须是0x0d 0x0a结尾)
+	{
+		Res =USART_ReceiveData(USART3);//(USART3->DR);	//读取接收到的数据
+		USART_SendData(DEBUG_USART,Res); 
+		if((USART3_RX_STA&0x8000)==0)//接收未完成
+		{
+			if(USART3_RX_STA&0x4000)//接收到了0x0d
+			{
+				if(Res!=0x0a)USART3_RX_STA=0;//接收错误,重新开始
+				else USART3_RX_STA|=0x8000;	//接收完成了
+								
+			}
+			else //还没收到0X0D
+			{	
+				if(Res==0x0d)USART3_RX_STA|=0x4000;
+				else
+				{
+					USART3_RX_BUF[USART3_RX_STA&0X3FFF] = Res ;
+					USART3_RX_STA++;
+					if(USART3_RX_STA>(USART3_REC_LEN-1))USART3_RX_STA=0;//接收数据错误,重新开始接收	  
+				}		 
+			}
+		}
+	}
+} 
+
 /*********************************************END OF FILE**********************/

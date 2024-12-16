@@ -100,7 +100,7 @@ uint32_t CPU_TS_TmrRd(void)
             或使能宏CPU_TS_INIT_IN_DELAY_FUNCTION
             最大延时值为8秒，即8*1000*1000
   */
-void CPU_TS_Tmr_Delay_US(__IO uint32_t us)
+void Delay_US(__IO uint32_t us)
 {
   uint32_t ticks;
   uint32_t told,tnow,tcnt=0;

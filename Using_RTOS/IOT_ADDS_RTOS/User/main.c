@@ -20,6 +20,7 @@
 #include "queue.h"
 
 #include "bsp_SysTick.h"
+#include "core_delay.h"  
 
 #include "bsp_led.h"  
 #include "bsp_debug_usart.h"
@@ -28,6 +29,7 @@
 #include "bsp_dht11.h"
 #include "bsp_sdram.h"
 #include "bsp_lcd.h"
+#include "esp8266.h"
 
 #include <string.h>
 
@@ -119,7 +121,8 @@ static void AppTaskCreate(void)
   BaseType_t xReturn = pdPASS;/* 定义一个创建信息返回值，默认为pdPASS */
   
   taskENTER_CRITICAL();           //进入临界区
-  
+//	Wifi_Init();
+//	printf("ESP8266_Config		OK!\r\n");
 //  /* 创建LED_Task任务 */
 //  xReturn = xTaskCreate((TaskFunction_t )LED_Task, /* 任务入口函数 */
 //                        (const char*    )"LED_Task",/* 任务名字 */
@@ -137,27 +140,27 @@ static void AppTaskCreate(void)
 //                        (UBaseType_t    )3, /* 任务的优先级 */
 //                        (TaskHandle_t*  )&KEY_Task_Handle);/* 任务控制块指针 */ 
 //  if(pdPASS == xReturn)
-    printf("创建KEY_Task任务成功!\r\n");
+//    printf("创建KEY_Task任务成功!\r\n");
 		
 	/* 创建READ_DHT11_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )READ_DHT11_Task,  /* 任务入口函数 */
-                        (const char*    )"READ_DHT11_Task",/* 任务名字 */
-                        (uint16_t       )512,  /* 任务栈大小 */
-                        (void*          )NULL,/* 任务入口函数参数 */
-                        (UBaseType_t    )4, /* 任务的优先级 */
-                        (TaskHandle_t*  )&READ_DHT11_Task_Handle);/* 任务控制块指针 */ 
-  if(pdPASS == xReturn)
-    printf("创建READ_DHT11_Task任务成功!\r\n");
-	
-	/* 创建LCD_Task任务 */
-  xReturn = xTaskCreate((TaskFunction_t )LCD_Task, /* 任务入口函数 */
-                        (const char*    )"LCD_Task",/* 任务名字 */
-                        (uint16_t       )512,   /* 任务栈大小 */
-                        (void*          )NULL,	/* 任务入口函数参数 */
-                        (UBaseType_t    )1,	    /* 任务的优先级 */
-                        (TaskHandle_t*  )&LCD_Task_Handle);/* 任务控制块指针 */
-  if(pdPASS == xReturn)
-    printf("创建LCD_Task任务成功!\r\n");
+//  xReturn = xTaskCreate((TaskFunction_t )READ_DHT11_Task,  /* 任务入口函数 */
+//                        (const char*    )"READ_DHT11_Task",/* 任务名字 */
+//                        (uint16_t       )512,  /* 任务栈大小 */
+//                        (void*          )NULL,/* 任务入口函数参数 */
+//                        (UBaseType_t    )4, /* 任务的优先级 */
+//                        (TaskHandle_t*  )&READ_DHT11_Task_Handle);/* 任务控制块指针 */ 
+//  if(pdPASS == xReturn)
+//    printf("创建READ_DHT11_Task任务成功!\r\n");
+//	
+//	/* 创建LCD_Task任务 */
+//  xReturn = xTaskCreate((TaskFunction_t )LCD_Task, /* 任务入口函数 */
+//                        (const char*    )"LCD_Task",/* 任务名字 */
+//                        (uint16_t       )512,   /* 任务栈大小 */
+//                        (void*          )NULL,	/* 任务入口函数参数 */
+//                        (UBaseType_t    )1,	    /* 任务的优先级 */
+//                        (TaskHandle_t*  )&LCD_Task_Handle);/* 任务控制块指针 */
+//  if(pdPASS == xReturn)
+//    printf("创建LCD_Task任务成功!\r\n");
   
   vTaskDelete(AppTaskCreate_Handle); //删除AppTaskCreate任务
   
@@ -338,6 +341,8 @@ static void HARDWARE_Init(void)				//硬件设备初始化函数放在这里
 	/* 串口初始化	*/
 	Debug_USART_Config();
   printf("USART_Config		OK!\r\n");
+	Debug_USART3_Config();
+  printf("USART3_Config		OK!\r\n");
 	
 	/* LED 初始化 */
 	LED_GPIO_Config();
@@ -360,6 +365,10 @@ static void HARDWARE_Init(void)				//硬件设备初始化函数放在这里
 	/* DHT11初始化 */
 	DHT11_GPIO_Config();
 	printf("DHT11_Config		OK!\r\n");
+	
+	/* ESP8266-01s初始化 */
+	Wifi_Init();
+	printf("ESP8266_Config		OK!\r\n");
 	
 	printf("ALL_Config		READY!\r\n\r\n\r\n");
 	

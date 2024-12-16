@@ -156,6 +156,28 @@ void SysTick_Handler(void)
 	#endif  /* INCLUDE_xTaskGetSchedulerState */
 }
 
+void DEBUG_USART_IRQHandler(void)
+{
+  uint8_t ucTemp;
+	if(USART_GetITStatus(DEBUG_USART,USART_IT_RXNE)!=RESET)
+	{		
+		ucTemp = USART_ReceiveData( DEBUG_USART );
+    USART_SendData(DEBUG_USART3,ucTemp);
+
+	}	 
+}
+
+//void DEBUG_USART3_IRQHandler(void)
+//{
+//  uint8_t ucTemp;
+//	if(USART_GetITStatus(DEBUG_USART3,USART_IT_RXNE)!=RESET)
+//	{		
+//		ucTemp = USART_ReceiveData( DEBUG_USART3 );
+//    USART_SendData(DEBUG_USART,ucTemp);
+
+//	}	 
+//}
+
 /******************************************************************************/
 /*                 STM32F4xx Peripherals Interrupt Handlers                   */
 /*  Add here the Interrupt Handler for the used peripheral(s) (PPP), for the  */
