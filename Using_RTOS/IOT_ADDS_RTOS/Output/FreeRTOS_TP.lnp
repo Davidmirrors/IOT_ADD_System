@@ -62,6 +62,7 @@
 "..\..\output\bsp_lcd.o"
 "..\..\output\bsp_sdram.o"
 "..\..\output\esp8266.o"
+"..\..\output\bh1750.o"
 --library_type=microlib --strict --scatter "..\..\Output\FreeRTOS_TP.sct"
 --summary_stderr --info summarysizes --map --xref --callgraph --symbols
 --info sizes --info totals --info unused --info veneers

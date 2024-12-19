@@ -22,7 +22,7 @@
 #include <semaphore.h>
 
 // 快速信息最大条数
-#define QUICK_MSG_MAX 5
+#define QUICK_MSG_MAX 10
 
 int sockfd;
 int msgNum = 0;
@@ -31,14 +31,26 @@ unsigned id;
 
 void *recvMsg(void *arg)
 {
-	int n,k,l;
+	int n,k,l,dot_flag = 0;
 	char *buf = calloc(1, 1024);
 	char SORH[10];
-	char RELAY_FLAG[10];
+	char Decode[20];	
+	char *recbuf = calloc(1, 1024);
+	
+	struct REC_Date
+	{
+		char	humi_int[10];			//湿度的整数部分
+		char	humi_deci[10];			//湿度的整数部分
+		char	temp_int[10];	 		//温度的整数部分
+		char	temp_deci[10];			//温度的小数部分
+		char	bh1750_date[10];		//光照强度
+	}RD;
+
 
 	while(1)
 	{
 		bzero(buf, 1024);
+		bzero(recbuf, 1024);
 
 		n = read(sockfd, buf, 1024);
 		if(n == -1)
@@ -51,46 +63,38 @@ void *recvMsg(void *arg)
 			printf("对端已关闭\n");
 			break;
 		}
-
-		for(k = 0; k < strlen(buf) ; k++)
+		printf("\r\n\r\n/**********************************/\r\n");
+		printf("/*************REC_TEST*************/\r\n");
+		printf("/**********************************/\r\n");
+		if(buf[0] == 'A' && buf[7] == 'B')
 		{
-			if(buf[k] == 'N')
+			RD.humi_int[0] = buf[1];
+			RD.humi_int[1] = buf[2];
+			RD.humi_deci[0] = buf[3];
+			RD.temp_int[0] = buf[4];
+			RD.temp_int[1] = buf[5];
+			RD.temp_deci[0] = buf[6];
+
+			printf("\r\nHumidity:%s.%s %%RH\r\n",RD.humi_int,RD.humi_deci);
+//			printf("humi_deci:%s\r\n",RD.humi_deci);
+			printf("\r\nTemperature:%s.%s ℃\r\n",RD.temp_int,RD.temp_deci);
+//			printf("temp_deci:%s\r\n",RD.temp_deci);
+		}
+
+		if(buf[7] == 'B' && buf[strlen(buf)-4] == 'C')
+		{
+			for(l = 0; l <  10; l++)
 			{
-				for(l = 0; l <  5; l++)
-				{
-					if(buf[k + l + 1] == 'D') break;
-					SORH[l] = buf[k + l + 1];
-				}
+				if(buf[l + 9] == 'D') break;
+				RD.bh1750_date[l] = buf[l + 8];
 			}
-			if(buf[k] == 'D')
-			{
-				RELAY_FLAG[0] = buf[k + 1];
-				RELAY_FLAG[1] = buf[k + 2];
-				RELAY_FLAG[2] = buf[k + 3];
-				RELAY_FLAG[3] = buf[k + 4];
-				RELAY_FLAG[4] = buf[k + 5];
-				if(buf[k] == 'E') break;
-			}
-		}		
-
-		printf("收到：%s\n", buf);
-		printf("温度：%c%c.%c  湿度：%c%c.%c\n", buf[4],buf[5],buf[6] , buf[1],buf[2],buf[3]);
-		printf("土壤湿度：%s\n", SORH);
-		if(RELAY_FLAG[0] == '0') printf("灌溉中\n");
-		if(RELAY_FLAG[0] == '1') printf("通风风扇工作中或抽水水泵工作中，或土壤湿度合适，灌溉停止\n");
-
-		if(RELAY_FLAG[2] == '0' && RELAY_FLAG[3] == '0') printf("蓄水池水位低\n");
-		if(RELAY_FLAG[2] == '0' && RELAY_FLAG[3] == '1') printf("蓄水池水位充足\n");
-		if(RELAY_FLAG[2] == '1' && RELAY_FLAG[3] == '1') printf("蓄水池已满\n");
-		if(RELAY_FLAG[2] == '1' && RELAY_FLAG[3] == '0') printf("蓄水池水位传感器故障\n");
-		if(RELAY_FLAG[1] == '0') printf("水泵抽水中\n");
-		if(RELAY_FLAG[1] == '1') printf("蓄水池水位合适或通风风扇工作中，抽水停止\n");
-		
-		if(RELAY_FLAG[4] == '0') printf("通风风扇工作中\n");
-		if(RELAY_FLAG[4] == '1') printf("通风风扇停止\n");
-
+			printf("\r\nLight:%s LX\r\n",RD.bh1750_date);
+		}
+		printf("\r\n收到消息：%s\r\n\r\n",buf);
 		fprintf(stderr, "\r（我的ID：%u）", ntohl(id));
 	}
+//帧头	h_i		h_d		t_i		t_d		DHT结束帧		b_date	光强结束帧	帧尾
+// A	xx		x		xx		x			B			xxxx		C		D
 }
 
 void *f1(void *arg)
@@ -109,7 +113,7 @@ void *f2(void *arg)
 	while(1)
 	{
 		sem_wait(&s);
-		printf("你说话太快了，喝杯茶休息一下吧~ \n");
+		printf("你说话太快了，休息一下吧~ \n");
 		fprintf(stderr, "\r（我的ID：%u）", ntohl(id));
 	}
 }

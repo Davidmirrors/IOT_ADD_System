@@ -19,9 +19,6 @@
 	
 #include "core_delay.h"   
 
-#include "FreeRTOS.h"
-#include "task.h"
-
 
 /*
 **********************************************************************

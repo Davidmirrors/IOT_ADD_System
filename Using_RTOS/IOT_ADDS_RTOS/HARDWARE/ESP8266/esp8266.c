@@ -46,7 +46,7 @@ void Wifi_Init(void)
 //		AT+CIPSEND=0,5
 //		hello,tcp
 	}
-	else
+	if(WIFI_Mode_FLAG == 1)
 	{
 		u3_printf("AT+CWMODE=1\r\n");//设置为 softAP+station 共存模式
 	
@@ -61,7 +61,7 @@ void Wifi_Init(void)
 		u3_printf("AT+CIPMUX=0\r\n");//启动单连接
 		Delay_MS(500);
 
-		u3_printf("AT+CIPSTART=\"TCP\",\"120.xxx.xxx.xxx\",xxxx\r\n");//连接服务器，协议TCP，IP地址xxx，端口xxx
+		u3_printf("AT+CIPSTART=\"TCP\",\"120.76.173.30\",50021\r\n");//连接服务器，协议TCP，IP地址120.76.173.30，端口50021
 		Delay_MS(3000);
 		
 		u3_printf("AT+CIPMODE=1\r\n");//设置透传模式

@@ -3,6 +3,9 @@
 
 #include "stm32f4xx.h"
 
+#include "FreeRTOS.h"
+#include "task.h"
+
 #define USE_DWT_DELAY			1	/* 使用dwt内核精确延时 */
 
 #if USE_DWT_DELAY
